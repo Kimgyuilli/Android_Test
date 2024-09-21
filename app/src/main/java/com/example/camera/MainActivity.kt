@@ -1,57 +1,62 @@
 package com.example.camera
 
-import android.widget.ImageView
-import android.os.Bundle
-import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.gun0912.tedpermission.PermissionListener
-import com.gun0912.tedpermission.normal.TedPermission
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Button
+import android.widget.ImageView
+import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import com.gun0912.tedpermission.PermissionListener
+import com.gun0912.tedpermission.normal.TedPermission
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 
-
 class MainActivity : AppCompatActivity() {
-    val REQUEST_IMAGE_CAPTURE = 1 //카메라 사진 촬영 요청 코드
-    lateinit var curPhotoPath: String //문자열 형태의 사진 경로 값 (초기값을 null로 시작하고 싶을 때 - late init) //이미지 뷰
-    private lateinit var iv_profile: ImageView
+    private val REQUEST_IMAGE_CAPTURE = 1 // 카메라 사진 촬영 요청 코드
+    private lateinit var curPhotoPath: String // 사진 경로
+    private lateinit var iv_profile: ImageView // 이미지 뷰
+    private val GALLERY_REQUEST_CODE = 2 // 갤러리 요청 코드
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
+        // 엣지 투 엣지 설정
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-        val btn_camera = findViewById<Button>(R.id.btn_camera)
 
+        iv_profile = findViewById(R.id.imageView) // 이미지 뷰 초기화
+        val btn_camera = findViewById<Button>(R.id.btn_camera) // 카메라 버튼
+
+        // 카메라 버튼 클릭 리스너
         btn_camera.setOnClickListener {
-            takeCapture()
+            takeCapture() // 카메라 실행
         }
 
-
-        var permissionlistener: PermissionListener = object : PermissionListener {
+        // 권한 요청 리스너
+        val permissionlistener: PermissionListener = object : PermissionListener {
             override fun onPermissionGranted() {
                 Toast.makeText(this@MainActivity, "Permission Granted", Toast.LENGTH_SHORT).show()
             }
@@ -64,34 +69,42 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // TedPermission을 사용하여 권한 요청
         TedPermission.create()
             .setPermissionListener(permissionlistener)
             .setDeniedMessage("If you reject permission,you can not use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
-            .setPermissions(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            .check();
-        val iv_profile = findViewById<ImageView>(R.id.imageView)
+            .setPermissions(
+                Manifest.permission.CAMERA,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+                // READ_EXTERNAL_STORAGE 권한은 Android 13 이상에서 필요하지 않습니다.
+            )
+            .check()
     }
 
-    private val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val file = File(curPhotoPath)
-            val bitmap = if (Build.VERSION.SDK_INT < 28) {
-                MediaStore.Images.Media.getBitmap(contentResolver, Uri.fromFile(file))
-            } else {
-                val decode = ImageDecoder.createSource(contentResolver, Uri.fromFile(file))
-                ImageDecoder.decodeBitmap(decode)
+    // 카메라 촬영 결과 처리
+    private val startForResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val file = File(curPhotoPath)
+                val bitmap = if (Build.VERSION.SDK_INT < 28) {
+                    MediaStore.Images.Media.getBitmap(contentResolver, Uri.fromFile(file))
+                } else {
+                    val decode = ImageDecoder.createSource(contentResolver, Uri.fromFile(file))
+                    ImageDecoder.decodeBitmap(decode)
+                }
+                iv_profile.setImageBitmap(bitmap) // 촬영된 이미지를 ImageView에 표시
+                savePhoto(bitmap) // 사진 저장
             }
-            iv_profile.setImageBitmap(bitmap)
-            savePhoto(bitmap)
         }
-    }
+
+    // 카메라 실행
     @SuppressLint("QueryPermissionsNeeded")
-    private fun takeCapture() { /*카메라 사용*/
+    private fun takeCapture() {
         Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
             takePictureIntent.resolveActivity(packageManager)?.also {
-                val photoFile: File? = try{
+                val photoFile: File? = try {
                     createImageFile()
-                } catch (ex: IOException){
+                } catch (ex: IOException) {
                     null
                 }
                 photoFile?.also {
@@ -107,44 +120,67 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // 이미지 파일 생성
     private fun createImageFile(): File {
         val timestamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
         val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        return File.createTempFile("JPEG_${timestamp}_", ".jpg",storageDir)
+        return File.createTempFile("JPEG_${timestamp}_", ".jpg", storageDir)
             .apply { curPhotoPath = absolutePath }
     }
 
+    // 갤러리 열기
+    private fun openGallery() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        startActivityForResult(intent, GALLERY_REQUEST_CODE)
+    }
 
-/*    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    // 갤러리에서 사진 선택 결과 처리
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            val bitmap: Bitmap
-            val file = File(curPhotoPath)
-            if(Build.VERSION.SDK_INT < 28){ *//*안드로이드 9.8 버전보다 낮을 경우 *//*
-                bitmap = MediaStore.Images.Media.getBitmap(contentResolver, Uri.fromFile(file))
-                iv_profile.setImageBitmap(bitmap)
-            } else {
-                val decode = ImageDecoder.createSource(
-                    this.contentResolver,
-                    Uri.fromFile(file)
-                )
-                bitmap = ImageDecoder.decodeBitmap(decode)
-                iv_profile.setImageBitmap(bitmap)
+        if (requestCode == GALLERY_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            data?.data?.let { uri ->
+                try {
+                    val bitmap = if (Build.VERSION.SDK_INT < 28) {
+                        MediaStore.Images.Media.getBitmap(contentResolver, uri)
+                    } else {
+                        val source = ImageDecoder.createSource(contentResolver, uri)
+                        ImageDecoder.decodeBitmap(source)
+                    }
+                    iv_profile.setImageBitmap(bitmap) // 선택한 이미지를 ImageView에 표시
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
-            savePhoto(bitmap)
         }
-    }*/
+    }
+
+    // 사진 저장
     private fun savePhoto(bitmap: Bitmap) {
-        val folderPath = Environment.getExternalStorageDirectory().absolutePath+ "/Picture/"
-        val timestamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-        val fileName = "${timestamp}.jpeg"
-        val folder = File(folderPath)
-        if(!folder.isDirectory) { //현재 해당 경로의 폴더가 존재하지 않으면)
-            folder.mkdirs() //make directory 줄임말, 해당 경로에 폴더 자동으로 새로 만들기
+        val filename = "${System.currentTimeMillis()}.jpeg"
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+                put(MediaStore.MediaColumns.IS_PENDING, 1)
+            }
         }
-        val out = FileOutputStream(folderPath + fileName)
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
-        Toast.makeText(this, "사진이 앨범에 저장되었습니다.", Toast.LENGTH_SHORT).show()
+
+        val imageUri: Uri? =
+            contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+
+        imageUri?.let {
+            val out = contentResolver.openOutputStream(it)
+            out?.use {
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                contentValues.clear()
+                contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
+                contentResolver.update(it, contentValues, null, null)
+            }
+            Toast.makeText(this, "사진이 앨범에 저장되었습니다.", Toast.LENGTH_SHORT).show()
+        }
     }
 }

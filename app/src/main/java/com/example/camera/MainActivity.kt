@@ -17,6 +17,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
@@ -33,11 +34,23 @@ class MainActivity : AppCompatActivity() {
     private lateinit var curPhotoPath: String // 사진 경로
     private lateinit var ivProfile: ImageView // 이미지 뷰
     private val galleryRequestCode = 2 // 갤러리 요청 코드
+    private lateinit var galleryActivityResultLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
+        galleryActivityResultLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                result.data?.data?.let { uri ->
+                    val bitmap = loadImageFromUri(uri)
+                    bitmap?.let { ivProfile.setImageBitmap(it) }
+                }
+            }
+        }
 
         // 엣지 투 엣지 설정
         applyEdgeToEdge()
@@ -51,8 +64,11 @@ class MainActivity : AppCompatActivity() {
         // 갤러리 버튼 클릭 리스너
         btnGallery.setOnClickListener { openGallery() }
 
+
+
         // 권한 요청
         requestPermissions()
+
     }
 
     // 엣지 투 엣지 설정
@@ -134,7 +150,7 @@ class MainActivity : AppCompatActivity() {
     // 갤러리 열기
     private fun openGallery() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        startActivityForResult(intent, galleryRequestCode)
+        galleryActivityResultLauncher.launch(intent)
     }
 
     // 이미지 파일 생성

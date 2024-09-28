@@ -6,6 +6,7 @@ import android.app.Activity
 import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
@@ -115,11 +116,18 @@ class MainActivity : AppCompatActivity() {
     private fun getCapturedImage(): Bitmap? {
         val file = File(curPhotoPath)
         return try {
-            if (Build.VERSION.SDK_INT < 28) {
-                MediaStore.Images.Media.getBitmap(contentResolver, Uri.fromFile(file))
-            } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) { // API 28 이상
                 val source = ImageDecoder.createSource(contentResolver, Uri.fromFile(file))
-                ImageDecoder.decodeBitmap(source)
+                val bitmap = ImageDecoder.decodeBitmap(source)
+                // 비트맵 크기 조정
+                Bitmap.createScaledBitmap(bitmap, 500, 500, true)
+            } else { // API 28 미만
+                val uri = Uri.fromFile(file)
+                contentResolver.openInputStream(uri)?.use { inputStream ->
+                    val bitmap = BitmapFactory.decodeStream(inputStream)
+                    // 비트맵 크기 조정
+                    Bitmap.createScaledBitmap(bitmap, 500, 500, true)
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -127,6 +135,9 @@ class MainActivity : AppCompatActivity() {
             null
         }
     }
+
+
+
 
     // 카메라 실행
     @SuppressLint("QueryPermissionsNeeded")

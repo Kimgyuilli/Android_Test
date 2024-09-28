@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="#FFFFFF"
+        tools:context=".MainActivity">
+
+    <!-- 상단 제목 -->
+    <TextView
+            android:id="@+id/titleTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="InHair"
+            android:textSize="32sp"
+            android:textColor="#000000"
+            android:fontFamily="sans-serif-medium"
+            android:layout_marginBottom="8dp"
+            android:textStyle="bold" />
+
+    <!-- 서브 타이틀 -->
+    <TextView
+            android:id="@+id/subtitleTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="건강 솔루션"
+            android:textSize="18sp"
+            android:textColor="#757575"
+            android:layout_marginBottom="16dp" />
+
+    <!-- Divider Line -->
+    <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#BDBDBD"
+            android:layout_marginBottom="16dp" />
+
+    <!-- 반복되는 항목 리스트 -->
+    <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="16dp">
+
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+            <!-- 항목 1 -->
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="8dp"
+                    android:layout_marginBottom="8dp">
+
+                <!-- 날짜 -->
+                <TextView
+                        android:id="@+id/dateTextView1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0000년 00월 00일"
+                        android:textSize="16sp"
+                        android:textColor="#757575"
+                        android:layout_marginBottom="4dp" />
+
+                <!-- 내용 버튼 -->
+                <Button
+                        android:id="@+id/contentButton1"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="내용"
+                        android:textColor="#FFFFFF"
+                        android:padding="12dp"
+                        android:layout_marginBottom="8dp" />
+
+                <!-- Divider Line -->
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#BDBDBD"
+                        android:layout_marginBottom="16dp" />
+
+            </LinearLayout>
+
+            <!-- 항목 2 (복사하여 필요한 만큼 추가) -->
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="8dp"
+                    android:layout_marginBottom="8dp">
+
+                <!-- 날짜 -->
+                <TextView
+                        android:id="@+id/dateTextView2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0000년 00월 00일"
+                        android:textSize="16sp"
+                        android:textColor="#757575"
+                        android:layout_marginBottom="4dp" />
+
+                <!-- 내용 버튼 -->
+                <Button
+                        android:id="@+id/contentButton2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="내용"
+                        android:textColor="#FFFFFF"
+                        android:padding="12dp"
+                        android:layout_marginBottom="8dp" />
+
+                <!-- Divider Line -->
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#BDBDBD"
+                        android:layout_marginBottom="16dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>
